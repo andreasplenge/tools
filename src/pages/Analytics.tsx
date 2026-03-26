@@ -19,7 +19,8 @@ import {
   Line,
   CartesianGrid,
 } from "recharts";
-import { Eye, Users, Clock, Monitor, Smartphone, Tablet, MousePointerClick } from "lucide-react";
+import { Eye, Users, Clock, Monitor, Smartphone, Tablet, MousePointerClick, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface PageVisit {
   id: string;
@@ -172,7 +173,7 @@ export default function Analytics() {
       <div className="mx-auto max-w-6xl space-y-8">
         <div className="flex items-center gap-3">
           <div className="h-8 w-1 rounded-full bg-primary shadow-[0_0_12px_hsl(175,80%,50%,0.5)]" />
-          <div>
+          <div className="flex-1">
             <h1 className="text-3xl font-bold tracking-tight text-foreground" style={monoStyle}>
               Analytics
             </h1>
@@ -180,6 +181,10 @@ export default function Analytics() {
               // page visit insights
             </p>
           </div>
+          <Link to="/" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors" style={monoStyle}>
+            <ArrowLeft className="h-3.5 w-3.5" />
+            back
+          </Link>
         </div>
 
         {/* Filters */}
