@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ChartContainer,
@@ -61,10 +62,12 @@ export default function Analytics() {
   const [deviceFilter, setDeviceFilter] = useState<DeviceFilter>("all");
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-analytics`)
-      .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
-      .then((data: PageVisit[]) => { setVisits(data ?? []); setLoading(false); })
-      .catch((err) => { console.error("Analytics fetch failed:", err); setLoading(false); });
+    supabase.functions.invoke<PageVisit[]>("get-analytics")
+      .then(({ data, error }) => {
+        if (error) console.error("Analytics fetch failed:", error);
+        else setVisits(data ?? []);
+        setLoading(false);
+      });
   }, []);
 
   const filtered = useMemo(() => {
