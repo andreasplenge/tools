@@ -1,0 +1,1 @@
+ALTER TABLE public.page_visits ADD COLUMN click text NULL;

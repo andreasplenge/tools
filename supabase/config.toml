@@ -1,0 +1,7 @@
+project_id = "ahzrpcexavpjilrlscgt"
+
+[functions.page-visit]
+verify_jwt = false
+
+[functions.get-analytics]
+verify_jwt = false
