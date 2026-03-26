@@ -62,7 +62,7 @@ export default function Analytics() {
   const [deviceFilter, setDeviceFilter] = useState<DeviceFilter>("all");
 
   useEffect(() => {
-    supabase.functions.invoke<PageVisit[]>("get-analytics")
+    supabase.functions.invoke<PageVisit[]>("get-analytics", { method: "GET" })
       .then(({ data, error }) => {
         if (error) console.error("Analytics fetch failed:", error);
         else setVisits(data ?? []);
