@@ -60,6 +60,7 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange>("all");
   const [deviceFilter, setDeviceFilter] = useState<DeviceFilter>("all");
+  const [domainFilter, setDomainFilter] = useState<string>("all");
 
   useEffect(() => {
     supabase.functions.invoke<PageVisit[]>("get-analytics", { method: "GET" })
@@ -69,6 +70,14 @@ export default function Analytics() {
         setLoading(false);
       });
   }, []);
+
+  const domains = useMemo(() => {
+    const set = new Set<string>();
+    for (const v of visits) {
+      try { set.add(new URL(v.page).hostname); } catch {}
+    }
+    return Array.from(set).sort();
+  }, [visits]);
 
   const filtered = useMemo(() => {
     let result = visits;
@@ -80,8 +89,11 @@ export default function Analytics() {
     if (deviceFilter !== "all") {
       result = result.filter((v) => v.device_type === deviceFilter);
     }
+    if (domainFilter !== "all") {
+      result = result.filter((v) => { try { return new URL(v.page).hostname === domainFilter; } catch { return false; } });
+    }
     return result;
-  }, [visits, dateRange, deviceFilter]);
+  }, [visits, dateRange, deviceFilter, domainFilter]);
 
   if (loading) {
     return (
@@ -188,6 +200,17 @@ export default function Analytics() {
               </button>
             ))}
           </div>
+          {domains.length > 1 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground" style={monoStyle}>domain:</span>
+              <button className={filterBtn(domainFilter === "all")} style={monoStyle} onClick={() => setDomainFilter("all")}>all</button>
+              {domains.map((d) => (
+                <button key={d} className={filterBtn(domainFilter === d)} style={monoStyle} onClick={() => setDomainFilter(d)}>
+                  {d}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* KPI Cards */}
