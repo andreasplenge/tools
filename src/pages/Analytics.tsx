@@ -51,6 +51,7 @@ const chartConfig: ChartConfig = {
   mobile: { label: "Mobile", color: "hsl(200, 60%, 50%)" },
   tablet: { label: "Tablet", color: "hsl(45, 80%, 55%)" },
   clicks: { label: "Clicks", color: "hsl(280, 60%, 55%)" },
+  avgPages: { label: "Avg Pages/Session", color: "hsl(45, 80%, 55%)" },
 };
 
 type DateRange = "7d" | "30d" | "all";
@@ -111,20 +112,24 @@ export default function Analytics() {
       (filtered.filter((v) => v.duration_ms).length || 1) /
       1000;
 
-  // Unique sessions & avg duration per day
-  const byDay = filtered.reduce<Record<string, { sessions: Map<string, number[]> }>>((acc, v) => {
+  // Unique sessions, avg duration & avg pages per day
+  const byDay = filtered.reduce<Record<string, { sessions: Map<string, { durations: number[], pages: Set<string> }> }>>((acc, v) => {
     const day = v.timestamp.slice(0, 10);
     if (!acc[day]) acc[day] = { sessions: new Map() };
-    if (!acc[day].sessions.has(v.session_id)) acc[day].sessions.set(v.session_id, []);
-    if (v.duration_ms) acc[day].sessions.get(v.session_id)!.push(v.duration_ms);
+    if (!acc[day].sessions.has(v.session_id)) acc[day].sessions.set(v.session_id, { durations: [], pages: new Set() });
+    const s = acc[day].sessions.get(v.session_id)!;
+    if (v.duration_ms) s.durations.push(v.duration_ms);
+    s.pages.add(v.page);
     return acc;
   }, {});
   const viewsPerDay = Object.entries(byDay)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, { sessions }]) => {
-      const durations = [...sessions.values()].map((d) => d.reduce((a, b) => a + b, 0) / (d.length || 1));
+      const vals = [...sessions.values()];
+      const durations = vals.map((s) => s.durations.reduce((a, b) => a + b, 0) / (s.durations.length || 1));
       const avgDur = durations.length ? durations.reduce((a, b) => a + b, 0) / durations.length / 60000 : 0;
-      return { date, uniqueVisitors: sessions.size, avgDuration: Math.round(avgDur * 10) / 10 };
+      const avgPg = vals.length ? vals.reduce((sum, s) => sum + s.pages.size, 0) / vals.length : 0;
+      return { date, uniqueVisitors: sessions.size, avgDuration: Math.round(avgDur * 10) / 10, avgPages: Math.round(avgPg * 10) / 10 };
     });
 
   // Top pages by unique sessions
@@ -248,7 +253,7 @@ export default function Analytics() {
           <Card className="lg:col-span-2 border-border/50 bg-card/80 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-foreground" style={monoStyle}>
-                Unique Sessions & Avg Duration Over Time
+                Unique Sessions, Avg Duration & Avg Pages Over Time
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -257,10 +262,11 @@ export default function Analytics() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(200, 15%, 18%)" />
                   <XAxis dataKey="date" fontSize={11} tickFormatter={(v) => v.slice(5)} stroke="hsl(200, 15%, 40%)" style={monoStyle} />
                   <YAxis yAxisId="left" fontSize={11} allowDecimals={false} stroke="hsl(200, 15%, 40%)" style={monoStyle} label={{ value: "Sessions", angle: -90, position: "insideLeft", style: { fontSize: 11, fill: 'hsl(200, 15%, 40%)', fontFamily: "'JetBrains Mono', monospace" } }} />
-                  <YAxis yAxisId="right" orientation="right" fontSize={11} stroke="hsl(200, 15%, 40%)" style={monoStyle} label={{ value: "Avg Duration (min)", angle: 90, position: "insideRight", style: { fontSize: 11, fill: 'hsl(200, 15%, 40%)', fontFamily: "'JetBrains Mono', monospace" } }} />
+                  <YAxis yAxisId="right" orientation="right" fontSize={11} stroke="hsl(200, 15%, 40%)" style={monoStyle} />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Line yAxisId="left" type="monotone" dataKey="uniqueVisitors" name="Unique Sessions" stroke="hsl(175, 80%, 50%)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(175, 80%, 50%)', strokeWidth: 0 }} />
                   <Line yAxisId="right" type="monotone" dataKey="avgDuration" name="Avg Duration (min)" stroke="hsl(145, 70%, 45%)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(145, 70%, 45%)', strokeWidth: 0 }} strokeDasharray="5 5" />
+                  <Line yAxisId="right" type="monotone" dataKey="avgPages" name="Avg Pages/Session" stroke="hsl(45, 80%, 55%)" strokeWidth={2} dot={{ r: 3, fill: 'hsl(45, 80%, 55%)', strokeWidth: 0 }} strokeDasharray="2 4" />
                 </LineChart>
               </ChartContainer>
             </CardContent>
