@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify(data ?? []), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
     });
   } catch (err) {
     console.error("Unexpected error:", err);
