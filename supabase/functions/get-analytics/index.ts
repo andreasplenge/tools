@@ -27,7 +27,8 @@ Deno.serve(async (req) => {
     const { data, error } = await supabase
       .from("page_visits")
       .select("*")
-      .order("timestamp", { ascending: true });
+      .order("timestamp", { ascending: true })
+      .limit(100000);
 
     if (error) {
       console.error("Query error:", error);
