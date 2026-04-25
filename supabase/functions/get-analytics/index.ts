@@ -24,11 +24,12 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data, error } = await supabase
       .from("page_visits")
       .select("*")
-      .order("timestamp", { ascending: true })
-      .limit(100000);
+      .gte("timestamp", since)
+      .order("timestamp", { ascending: true });
 
     if (error) {
       console.error("Query error:", error);
